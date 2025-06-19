@@ -1,0 +1,19 @@
+# Direktori hasil build Zig
+zig-out/
+.zig-cache/
+
+# Output dari build.zig
+*.exe
+*.o
+*.obj
+*.dll
+*.so
+*.dylib
+
+# Editor/IDE
+.vscode/
+.idea/
+
+# OS-specific
+.DS_Store
+Thumbs.db
