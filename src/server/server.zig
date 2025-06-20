@@ -1,6 +1,9 @@
 const std = @import("std");
 const http = std.http;
 
+var active_threads: usize = 0;
+const ordering = .seq_cst;
+
 pub fn run() !void {
     const allocator = std.heap.page_allocator;
     const address = try std.net.Address.parseIp4("127.0.0.1", 8080);
@@ -10,19 +13,29 @@ pub fn run() !void {
     std.debug.print("\n\n::: 1 ::: HTTP SERVER EXAMPLE :::\n", .{});
     std.debug.print("---> Server running on http://127.0.0.1:8080 <---\n\n", .{});
 
+    // Di main thread:
+
+    var thread_count: usize = 0;
+
     while (true) {
         const conn = try listener.accept();
-        handleConnection(conn, allocator) catch |err| {
-            std.debug.print("Connection error: {}\n", .{err});
-        };
+        _ = try std.Thread.spawn(
+            .{},
+            handleConnection,
+            .{
+                conn,
+                allocator,
+            },
+        );
+        thread_count += 1;
+        std.debug.print("\n\nThread Count : {d}\n", .{thread_count});
+        std.debug.print("Active Count : {d}\n\n", .{active_threads});
     }
 }
-
-fn handleConnection(
-    conn: std.net.Server.Connection,
-    allocator: std.mem.Allocator,
-) !void {
+fn handleConnection(conn: std.net.Server.Connection, allocator: std.mem.Allocator) !void {
     defer conn.stream.close();
+    _ = @atomicRmw(usize, &active_threads, .Add, 1, ordering);
+    defer _ = @atomicRmw(usize, &active_threads, .Sub, 1, ordering);
     var buffer: [4096]u8 = undefined;
     var server = std.http.Server.init(conn, &buffer);
     var request = try server.receiveHead();
