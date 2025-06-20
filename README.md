@@ -1,4 +1,4 @@
-# Xxpore Zig Programming Language
+# Explore Zig Programming Language
 
 ### Init Zig Project 
 ```bash
